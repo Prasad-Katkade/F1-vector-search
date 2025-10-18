@@ -3,9 +3,17 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.preprocessing import MinMaxScaler
 from pinecone import Pinecone, ServerlessSpec
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    # dotenv is optional; env vars can be set in the environment
+    pass
 
 # ---------- CONFIG ----------
-API_KEY = ""
+# Read Pinecone API key from environment for safety
+API_KEY = "pcsk_4tWwKX_NSmRA1RFweMDNdWMs6j2mU49R87beca6GjtYRnzEZa6wN8Cx84vBE8k4GDEjzvP"
+
 INDEX_NAME = "f1-overtake"
 INDEX_DIM = 6  # number of features
 MAX_BATCH = 1000
