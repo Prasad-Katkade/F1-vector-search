@@ -1,0 +1,61 @@
+Overtaking Opportunities → depend on
+
+    Tyre compound & wear
+
+    Track layout (DRS zones, corners vs straights)
+
+    Weather (wet vs dry grip)
+
+Pit Stop Strategy → depend on
+
+    Tyre degradation rate
+
+    Safety car or virtual safety car timing
+
+    Track position vs time loss in pits
+
+Fuel Management → depend on
+
+    Engine mode usage
+
+    Race pace consistency
+
+    Safety car periods (fuel saving)
+
+Brake Performance → depend on
+
+    Brake temperature & cooling efficiency
+
+    Track layout (heavy braking zones)
+
+Car Balance / Handling → depend on
+
+    Downforce setup (aero configuration)
+
+    Tyre temperature window
+
+Track evolution (rubber buildup)
+
+    Weather Adaptation → depend on
+
+    Rain intensity / forecast accuracy
+
+Tyre choice (slicks vs intermediates vs wets)
+
+    Traffic & Blue Flags → depend on
+
+    Race position (lapping slower cars)
+
+    Track width & overtaking spots
+
+Mechanical Reliability → depend on
+
+    Engine and gearbox wear
+
+    Cooling efficiency and driving style
+
+Driver Fatigue / Focus → depend on
+
+    Heat, G-forces, and hydration
+
+    Race duration and stress level
