@@ -105,7 +105,7 @@ async def undercut_stream(websocket: WebSocket):
             await websocket.send_json(response)
 
             # Wait 5 seconds before next telemetry update
-            await asyncio.sleep(5)
+            await asyncio.sleep(1)
 
     except Exception as e:
         print("WebSocket closed:", e)
