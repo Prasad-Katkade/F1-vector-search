@@ -10,23 +10,31 @@ load_dotenv()
 
 # ---------- Pinecone Setup ----------
 API_KEY = os.getenv("API_KEY")
-INDEX_NAME = "f1-overtake"
-INDEX_DIM = 6  # number of features
+INDEX_NAME = "f1-cliff"
+INDEX_DIM = 7  # number of feature dimensions (updated from 6 → 7)
 MAX_BATCH = 1000
 
-OUTPUT_CSV_TEMPLATE = "overtake_laps_{}_usa.csv"
+OUTPUT_CSV_TEMPLATE = "tire_cliff_laps_{}_usa.csv"
 YEARS = [2022, 2023, 2024]
 
+# ---------- Feature + Metadata Columns ----------
 FEATURE_COLS = [
-    'TrackNormalized',  # Track name numeric representation
-    'Position',
-    'Compound',
-    'TyreLife',
-    'TrackTemp',
-    'Rainfall'
+    'TrackNormalized',  # encoded track
+    'Compound',         # normalized tire compound
+    'TyreLife',         # normalized tire wear
+    'TrackTemp',        # normalized track temp
+    'Rainfall',         # normalized rainfall
+    'LapNumber',        # normalized lap
+    'Position'          # normalized driver position
 ]
 
-METADATA_COLS = ['TrackName', 'Year', 'Driver', 'Team', 'LapNumber']
+METADATA_COLS = [
+    'Driver',
+    'Year',
+    'LapTimeLoss',
+    'TrackName',
+    'Team'
+]
 # ------------------------------------------------------------
 
 # ---------- Step 1: Load & Combine ----------
@@ -40,13 +48,17 @@ for year in YEARS:
     df = pd.read_csv(path)
     df["Year"] = year
 
-    # Normalize compound types 0–1
+    # Map compound types → 0–1 range
     COMPOUND_MAP = {"SOFT": 1, "MEDIUM": 2, "HARD": 3, "INTERMEDIATE": 4, "WET": 5, "UNKNOWN": 0}
-    df["Compound"] = df["Compound"].map(COMPOUND_MAP).fillna(0) / 5
+    df["Compound"] = df["Compound"].map(COMPOUND_MAP).fillna(0) / 5.0
 
-    # Normalize track names (numeric ID → 0–1)
+    # Assign numeric ID to each track → normalize 0–1
     track_map = {t: i for i, t in enumerate(df["TrackName"].unique())}
     df["TrackNormalized"] = df["TrackName"].map(track_map) / max(track_map.values())
+
+    # Fill missing values for numeric columns
+    for col in ["TyreLife", "TrackTemp", "Rainfall", "LapNumber", "Position"]:
+        df[col] = df[col].fillna(0)
 
     dfs.append(df)
 
@@ -58,13 +70,12 @@ print(f"✅ Combined shape: {combined.shape}")
 
 # ---------- Step 2: Global Normalization ----------
 scaler = MinMaxScaler()
-combined[["Position", "TyreLife", "TrackTemp", "Rainfall"]] = scaler.fit_transform(
-    combined[["Position", "TyreLife", "TrackTemp", "Rainfall"]].fillna(0)
-)
+cols_to_scale = ["TyreLife", "TrackTemp", "Rainfall", "LapNumber", "Position"]
+combined[cols_to_scale] = scaler.fit_transform(combined[cols_to_scale])
 
-# Save combined normalized file for debugging
-combined.to_csv("overtake_all_years_combined.csv", index=False)
-print("💾 Saved: overtake_all_years_combined.csv")
+# Save combined normalized file for reference
+combined.to_csv("cliff_all_years_combined.csv", index=False)
+print("💾 Saved normalized data: cliff_all_years_combined.csv")
 
 # ---------- Step 3: Pinecone Setup ----------
 pc = Pinecone(api_key=API_KEY)

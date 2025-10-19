@@ -10,23 +10,33 @@ load_dotenv()
 
 # ---------- Pinecone Setup ----------
 API_KEY = os.getenv("API_KEY")
-INDEX_NAME = "f1-overtake"
-INDEX_DIM = 6  # number of features
+INDEX_NAME = "f1-cuts"
+INDEX_DIM = 8 
 MAX_BATCH = 1000
 
-OUTPUT_CSV_TEMPLATE = "overtake_laps_{}_usa.csv"
-YEARS = [2022, 2023, 2024]
+OUTPUT_CSV_TEMPLATE = "undercut_laps_{}_williams.csv"
+YEARS = [2020, 2021, 2022, 2023, 2024]
 
+# ---------- Feature + Metadata Columns ----------
 FEATURE_COLS = [
-    'TrackNormalized',  # Track name numeric representation
+    'TrackNormalized',
+    'LapNumber',
     'Position',
-    'Compound',
-    'TyreLife',
+    'NewTireCompound',
+    'Rival_Compound',
+    'Rival_TyreLife',
+    'GapToRival_BeforePit',
     'TrackTemp',
     'Rainfall'
 ]
 
-METADATA_COLS = ['TrackName', 'Year', 'Driver', 'Team', 'LapNumber']
+METADATA_COLS = [
+    'Driver',
+    'Year',
+    'TrackName',
+    'Team',
+    'Rival_Pitted_Lap'
+]
 # ------------------------------------------------------------
 
 # ---------- Step 1: Load & Combine ----------
@@ -40,13 +50,16 @@ for year in YEARS:
     df = pd.read_csv(path)
     df["Year"] = year
 
-    # Normalize compound types 0–1
-    COMPOUND_MAP = {"SOFT": 1, "MEDIUM": 2, "HARD": 3, "INTERMEDIATE": 4, "WET": 5, "UNKNOWN": 0}
-    df["Compound"] = df["Compound"].map(COMPOUND_MAP).fillna(0) / 5
+    # Map numeric normalization for compounds if needed
+    # Already normalized in extraction, so we skip mapping
 
-    # Normalize track names (numeric ID → 0–1)
+    # Assign numeric ID to each track → normalize 0–1
     track_map = {t: i for i, t in enumerate(df["TrackName"].unique())}
     df["TrackNormalized"] = df["TrackName"].map(track_map) / max(track_map.values())
+
+    # Fill missing values for numeric columns
+    for col in FEATURE_COLS:
+        df[col] = df[col].fillna(0)
 
     dfs.append(df)
 
@@ -58,13 +71,12 @@ print(f"✅ Combined shape: {combined.shape}")
 
 # ---------- Step 2: Global Normalization ----------
 scaler = MinMaxScaler()
-combined[["Position", "TyreLife", "TrackTemp", "Rainfall"]] = scaler.fit_transform(
-    combined[["Position", "TyreLife", "TrackTemp", "Rainfall"]].fillna(0)
-)
+cols_to_scale = ['LapNumber', 'Position', 'NewTireCompound', 'Rival_Compound', 'Rival_TyreLife', 'GapToRival_BeforePit', 'TrackTemp', 'Rainfall']
+combined[cols_to_scale] = scaler.fit_transform(combined[cols_to_scale])
 
-# Save combined normalized file for debugging
-combined.to_csv("overtake_all_years_combined.csv", index=False)
-print("💾 Saved: overtake_all_years_combined.csv")
+# Save combined normalized file for reference
+combined.to_csv("undercut_all_years_combined.csv", index=False)
+print("💾 Saved normalized data: undercut_all_years_combined.csv")
 
 # ---------- Step 3: Pinecone Setup ----------
 pc = Pinecone(api_key=API_KEY)
@@ -73,7 +85,7 @@ if INDEX_NAME not in pc.list_indexes().names():
     print(f"🧱 Creating index '{INDEX_NAME}'...")
     pc.create_index(
         name=INDEX_NAME,
-        dimension=INDEX_DIM,
+        dimension=len(FEATURE_COLS),
         metric="cosine",
         spec=ServerlessSpec(cloud="aws", region="us-east-1")
     )

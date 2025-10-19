@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>F1 Overtakes Live</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f0f2f5;
+    }
+    h1 {
+      color: #333;
+    }
+    #refresh {
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    table {
+      border-collapse: collapse;
+      width: 50%;
+      background: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #f7f7f7;
+    }
+  </style>
+</head>
+<body>
+  <h1>F1 Overtakes Live</h1>
+  <div id="refresh">Refresh: 0</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Driver</th>
+        <th>Count</th>
+      </tr>
+    </thead>
+    <tbody id="overtake-table">
+    </tbody>
+  </table>
+
+  <script>
+    const ws = new WebSocket("ws://localhost:8000/ws/overtakes");
+
+    ws.onopen = () => console.log("✅ Connected to WebSocket!");
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("📊 Latest overtake counts:", data);
+
+      // Update refresh count
+      document.getElementById("refresh").innerText = `Refresh: ${data.refresh_count || 0}`;
+
+      // Clear existing table
+      const tbody = document.getElementById("overtake-table");
+      tbody.innerHTML = "";
+
+      // Populate table excluding refresh_count
+      Object.keys(data).forEach(driver => {
+        if (driver === "refresh_count") return;
+        const row = document.createElement("tr");
+        const driverCell = document.createElement("td");
+        const countCell = document.createElement("td");
+        driverCell.textContent = driver;
+        countCell.textContent = data[driver];
+        row.appendChild(driverCell);
+        row.appendChild(countCell);
+        tbody.appendChild(row);
+      });
+    };
+
+    ws.onclose = () => console.log("⚠️ WebSocket closed.");
+    ws.onerror = (err) => console.error("❌ WebSocket error:", err);
+  </script>
+</body>
+</html>

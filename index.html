@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>F1 Undercut Simulation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f0f0f0;
+    }
+    h1 {
+      color: #222;
+    }
+    pre {
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    .risk {
+      color: red;
+      font-weight: bold;
+    }
+    .safe {
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>F1 Undercut Live Simulation</h1>
+  <p>Refresh count: <span id="refresh">0</span></p>
+  <pre id="output">Waiting for data...</pre>
+
+  <script>
+    const ws = new WebSocket("ws://localhost:8002/ws/undercuts");
+    const output = document.getElementById("output");
+    const refresh = document.getElementById("refresh");
+
+    ws.onopen = () => console.log("✅ Connected to WebSocket!");
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      refresh.innerText = data.refresh_count || 0;
+
+      let display = "";
+      for (let driver in data) {
+        if (driver === "refresh_count") continue;
+        const info = data[driver];
+        const riskClass = info.relevant_matches > 0 ? "risk" : "safe";
+        display += `${driver}:\n`;
+        display += `  Total matches: ${info.total_matches}\n`;
+        display += `  Relevant matches (rival not pitted): ${info.relevant_matches}\n`;
+        display += `  Simulated vector: [${info.simulated_vector.map(v => v.toFixed(2)).join(", ")}]\n`;
+        display += `  Status: ${info.relevant_matches > 0 ? "🚨 Risky undercut!" : "✅ Safe"}\n\n`;
+      }
+
+      output.innerHTML = display;
+      console.log("📊 Latest undercut data:", data);
+    };
+
+    ws.onclose = () => console.log("⚠️ WebSocket closed.");
+    ws.onerror = (err) => console.error("❌ WebSocket error:", err);
+  </script>
+</body>
+</html>

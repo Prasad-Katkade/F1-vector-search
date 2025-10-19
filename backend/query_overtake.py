@@ -1,8 +1,12 @@
 import pandas as pd
 from pinecone import Pinecone
+from dotenv import load_dotenv
+import os
 
-# --- Pinecone setup ---
-API_KEY = ""
+load_dotenv()
+
+# ---------- Pinecone Setup ----------
+API_KEY = os.getenv("API_KEY")
 INDEX_NAME = "f1-overtake"
 
 pc = Pinecone(api_key=API_KEY)
