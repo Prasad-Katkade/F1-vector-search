@@ -94,7 +94,7 @@ async def cliff_stream(websocket: WebSocket):
             await websocket.send_json(response)
 
             # Wait 10 seconds before next telemetry update
-            await asyncio.sleep(1)
+            await asyncio.sleep(2)
 
     except Exception as e:
         print("WebSocket closed:", e)
