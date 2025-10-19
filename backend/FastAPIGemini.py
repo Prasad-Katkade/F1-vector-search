@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
 
-GEMINI_API_KEY = "AIzaSyDSk-nr2zAkK2rhirHBA6UZnZs5oA9k1hc"
+GEMINI_API_KEY = "API"
 GEMINI_MODEL = "gemini-pro"
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
 
